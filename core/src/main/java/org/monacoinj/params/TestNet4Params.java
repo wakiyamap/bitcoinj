@@ -42,6 +42,12 @@ public class TestNet4Params extends AbstractMonacoinNetParams {
         packetMagic = 0xfcc1b7dc;
         interval = INTERVAL;
         targetTimespan = TARGET_TIMESPAN;
+        digishieldInterval = DIGISHIELD_INTERVAL;
+        digishieldTargetTimespan = DIGISHIELD_TARGET_TIMESPAN;
+        switchKGWBlock = SWITCH_KGW_BLOCK;
+        switchDigishieldBlock = SWITCH_DIGISHIELD_BLOCK;
+        switchDGWV3Block = SWITCH_DGW_V3_BLOCK;
+        switchAlgoLyra2ReV2 = SWITCH_ALGO_LYRA2_RE_V2;
         maxTarget = Utils.decodeCompactBits(0x1e0fffffL);
         port = 19403;
         addressHeader = 111;

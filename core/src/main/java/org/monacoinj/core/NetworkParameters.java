@@ -71,7 +71,8 @@ public abstract class NetworkParameters {
     // TODO: Seed nodes should be here as well.
 
     protected Block genesisBlock;
-    protected BigInteger maxTarget;
+    protected BigInteger maxTarget; //TODO Mona
+    protected BigInteger proofOfWorkLimit;
     protected int port;
     protected long packetMagic;  // Indicates message origin network and is used to seek to the next message when stream state is unknown.
     protected int addressHeader;
@@ -82,6 +83,12 @@ public abstract class NetworkParameters {
     protected int interval;
     protected int targetTimespan;
     protected byte[] alertSigningKey;
+    protected int digishieldInterval;
+    protected int switchKGWBlock;
+    protected int switchDigishieldBlock;
+    protected int digishieldTargetTimespan;
+    protected int switchDGWV3Block;
+    protected int switchAlgoLyra2ReV2;
     protected int bip32HeaderPub;
     protected int bip32HeaderPriv;
 
@@ -138,8 +145,15 @@ public abstract class NetworkParameters {
     }
 
     public static final int TARGET_TIMESPAN = (int)(1.1 * 24 * 60 * 60);  // 1.1d per difficulty cycle, on average.
+    public static final int DIGISHIELD_TARGET_TIMESPAN = (int)(1.5 * 60); // one block;
     public static final int TARGET_SPACING = (int)(1.5 * 60);  // 1.5 minutes per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
+    public static final int DIGISHIELD_INTERVAL = DIGISHIELD_TARGET_TIMESPAN / TARGET_SPACING;
+
+    public static final int SWITCH_KGW_BLOCK = 80000;
+    public static final int SWITCH_DIGISHIELD_BLOCK = 140000;
+    public static final int SWITCH_DGW_V3_BLOCK = 450000;
+    public static final int SWITCH_ALGO_LYRA2_RE_V2 = 450000;
     
     /**
      * Blocks with a timestamp after this should enforce BIP 16, aka "Pay to script hash". This BIP changed the
@@ -348,6 +362,10 @@ public abstract class NetworkParameters {
         return targetTimespan;
     }
 
+    public int getDigishieldTargetTimespan() {
+        return digishieldTargetTimespan;
+    }
+
     /**
      * The version codes that prefix addresses which are acceptable on this network. Although Satoshi intended these to
      * be used for "versioning", in fact they are today used to discriminate what kind of data is contained in the
@@ -367,6 +385,30 @@ public abstract class NetworkParameters {
     /** How many blocks pass between difficulty adjustment periods. Monacoin standardises this to be 2016. */
     public int getInterval() {
         return interval;
+    }
+
+    public int getDigishieldInterval() {
+        return digishieldInterval;
+    }
+
+    public int getSwitchKGWBlock() {
+        return switchKGWBlock;
+    }
+    public int getSwitchDigishieldBlock() {
+        return switchDigishieldBlock;
+    }
+
+    public int getSwitchDGWV3Block() {
+        return switchDGWV3Block;
+    }
+
+    public int getSwitchAlgoLyra2ReV2(){
+        return switchAlgoLyra2ReV2;
+    }
+
+    /** What the easiest allowable proof of work should be. */
+    public BigInteger getProofOfWorkLimit() {
+        return proofOfWorkLimit;
     }
 
     /** Maximum target represents the easiest allowable proof of work. */

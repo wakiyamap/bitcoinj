@@ -36,6 +36,12 @@ public class MainNetParams extends AbstractMonacoinNetParams {
         super();
         interval = INTERVAL;
         targetTimespan = TARGET_TIMESPAN;
+        digishieldInterval = DIGISHIELD_INTERVAL;
+        digishieldTargetTimespan = DIGISHIELD_TARGET_TIMESPAN;
+        switchKGWBlock = SWITCH_KGW_BLOCK;
+        switchDigishieldBlock = SWITCH_DIGISHIELD_BLOCK;
+        switchDGWV3Block = SWITCH_DGW_V3_BLOCK;
+        switchAlgoLyra2ReV2 = SWITCH_ALGO_LYRA2_RE_V2;
         maxTarget = Utils.decodeCompactBits(0x1e0fffffL);
         dumpedPrivateKeyHeader = 176;
         dumpedPrivateKeyHeaderAlt = 178; // TODO Mona still monacoin-qt 0.10.x
