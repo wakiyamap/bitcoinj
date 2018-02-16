@@ -32,6 +32,8 @@ import static org.monacoinj.core.Coin.*;
 import static org.monacoinj.core.Sha256Hash.*;
 import static org.monacoinj.core.Utils.scryptDigest;
 
+import org.monacoinj.crypto.Lyra2REv2;
+
 /**
  * <p>A block is a group of transactions, and is one of the fundamental data structures of the Monacoin system.
  * It records a set of {@link Transaction}s together with some data that links it into a place in the global block
@@ -105,14 +107,23 @@ public class Block extends Message {
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;
     private Sha256Hash scryptHash;
+    private Sha256Hash lyra2REv2Hash;
 
     protected boolean headerBytesValid;
     protected boolean transactionBytesValid;
+
+    private static Lyra2REv2 lyra2REv2 = new Lyra2REv2();
     
     // Blocks can be encoded in a way that will use more bytes than is optimal (due to VarInts having multiple encodings)
     // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
     // of the size of the ideal encoding in addition to the actual message size (which Message needs)
     protected int optimalEncodingMessageSize;
+
+    private int heightForDeterminingHashAlgo = 0;
+
+    public void setHeight( int height ){
+        heightForDeterminingHashAlgo = height;
+    }
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
     Block(NetworkParameters params, long setVersion) {
@@ -424,6 +435,16 @@ public class Block extends Message {
         }
     }
 
+    private Sha256Hash calculateLyra2REv2Hash() {
+        try {
+                ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(HEADER_SIZE);
+                writeHeader(bos);
+                return new Sha256Hash(Utils.reverseBytes(lyra2REv2.lyra2REv2(bos.toByteArray())));
+            } catch (IOException e) {
+                throw new RuntimeException(e); // Cannot happen.
+            }
+    }
+
     /**
      * Returns the hash of the block (which for a valid, solved block should be below the target) in the form seen on
      * the block explorer. If you call this on block 1 in the mainnet chain
@@ -435,6 +456,10 @@ public class Block extends Message {
 
     public String getScryptHashAsString() {
         return getScryptHash().toString();
+    }
+
+    public String getLyra2REv2HashAsString() {
+        return getLyra2REv2Hash().toString();
     }
 
     /**
@@ -452,6 +477,12 @@ public class Block extends Message {
         if (scryptHash == null)
             scryptHash = calculateScryptHash();
         return scryptHash;
+    }
+
+    public Sha256Hash getLyra2REv2Hash() {
+        if (lyra2REv2Hash == null)
+                lyra2REv2Hash = calculateLyra2REv2Hash();
+        return lyra2REv2Hash;
     }
 
     /**
@@ -528,11 +559,12 @@ public class Block extends Message {
      * <p>This can loop forever if a solution cannot be found solely by incrementing nonce. It doesn't change
      * extraNonce.</p>
      */
-    public void solve() {
+    public void solve(int height) {
+        heightForDeterminingHashAlgo = height;
         while (true) {
             try {
                 // Is our proof of work valid yet?
-                if (checkProofOfWork(false))
+                if (checkProofOfWork(false,height))
                     return;
                 // No, so increment the nonce and try again.
                 setNonce(getNonce() + 1);
@@ -540,6 +572,10 @@ public class Block extends Message {
                 throw new RuntimeException(e); // Cannot happen.
             }
         }
+    }
+
+    public void solve(){
+        solve( heightForDeterminingHashAlgo );
     }
 
     /**
@@ -555,7 +591,7 @@ public class Block extends Message {
     }
 
     /** Returns true if the hash of the block is OK (lower than difficulty target). */
-    protected boolean checkProofOfWork(boolean throwException) throws VerificationException {
+    protected boolean checkProofOfWork(boolean throwException , int height) throws VerificationException {
         // This part is key - it is what proves the block was as difficult to make as it claims
         // to be. Note however that in the context of this function, the block can claim to be
         // as difficult as it wants to be .... if somebody was able to take control of our network
@@ -566,7 +602,11 @@ public class Block extends Message {
         // field is of the right value. This requires us to have the preceeding blocks.
         BigInteger target = getDifficultyTargetAsInteger();
 
-        BigInteger h = getScryptHash().toBigInteger(); //Todo Mona
+        BigInteger h ;
+        if( height >= params.getSwitchAlgoLyra2ReV2())
+            h = getLyra2REv2Hash().toBigInteger();
+        else
+            h = getScryptHash().toBigInteger();
         if (h.compareTo(target) > 0) {
             // Proof of work check failed!
             if (throwException)
@@ -694,14 +734,19 @@ public class Block extends Message {
      *
      * @throws VerificationException
      */
-    public void verifyHeader() throws VerificationException {
+    public void verifyHeader(int height) throws VerificationException {
         // Prove that this block is OK. It might seem that we can just ignore most of these checks given that the
         // network is also verifying the blocks, but we cannot as it'd open us to a variety of obscure attacks.
         //
         // Firstly we need to ensure this block does in fact represent real work done. If the difficulty is high
         // enough, it's probably been done by the network.
-        checkProofOfWork(true);
+        heightForDeterminingHashAlgo = height;
+        checkProofOfWork(true,height);
         checkTimestamp();
+    }
+
+    public void verifyHeader() throws VerificationException {
+        verifyHeader( heightForDeterminingHashAlgo );
     }
 
     /**
@@ -939,6 +984,7 @@ public class Block extends Message {
         Block b = new Block(params, version);
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
+        b.setHeight( heightForDeterminingHashAlgo + 1);
 
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
@@ -980,7 +1026,7 @@ public class Block extends Message {
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
+    public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut, int height) {
         return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
     }
 

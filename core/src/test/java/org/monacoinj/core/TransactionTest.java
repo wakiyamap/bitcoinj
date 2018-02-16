@@ -410,7 +410,7 @@ public class TransactionTest {
     public void testHashForSignatureThreadSafety() {
         Block genesis = UnitTestParams.get().getGenesisBlock();
         Block block1 = genesis.createNextBlock(new ECKey().toAddress(UnitTestParams.get()),
-                    genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
+                    genesis.getTransactions().get(0).getOutput(0).getOutPointFor(),1); //TODO Mona 1?
 
         final Transaction tx = block1.getTransactions().get(1);
         final String txHash = tx.getHashAsString();

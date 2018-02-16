@@ -452,28 +452,9 @@ public abstract class AbstractBlockChain {
             final int height;
             final EnumSet<Block.VerifyFlag> flags;
 
-            // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
-            // if there is a tx sending or receiving coins using an address in one of our wallets. And those transactions
-            // are only lightly verified: presence in a valid connecting block is taken as proof of validity. See the
-            // article here for more details: https://monacoinj.github.io/security-model
-            try {
-                block.verifyHeader();
-                storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
-                if (storedPrev != null) {
-                    height = storedPrev.getHeight() + 1;
-                } else {
-                    height = Block.BLOCK_HEIGHT_UNKNOWN;
-                }
-                flags = params.getBlockVerificationFlags(block, versionTally, height);
-                if (shouldVerifyTransactions())
-                    block.verifyTransactions(height, flags);
-            } catch (VerificationException e) {
-                log.error("Failed to verify block: ", e);
-                log.error(block.getHashAsString());
-                throw e;
-            }
 
             // Try linking it to a place in the currently known blocks.
+            storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
 
             if (storedPrev == null) {
                 // We can't find the previous block. Probably we are still in the process of downloading the chain and a
@@ -484,6 +465,27 @@ public abstract class AbstractBlockChain {
                 orphanBlocks.put(block.getHash(), new OrphanBlock(block, filteredTxHashList, filteredTxn));
                 return false;
             } else {
+
+                // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
+                // if there is a tx sending or receiving coins using an address in one of our wallets. And those transactions
+                // are only lightly verified: presence in a valid connecting block is taken as proof of validity. See the
+                // article here for more details: https://monacoinj.github.io/security-model
+                try {
+                    block.verifyHeader(storedPrev.getHeight()+1);
+                    if (storedPrev != null) {
+                        height = storedPrev.getHeight() + 1;
+                    } else {
+                        height = Block.BLOCK_HEIGHT_UNKNOWN;
+                    }
+                    flags = params.getBlockVerificationFlags(block, versionTally, height);
+                    if (shouldVerifyTransactions())
+                        block.verifyTransactions(height, flags);
+                } catch (VerificationException e) {
+                    log.error("Failed to verify block: ", e);
+                    log.error(block.getHashAsString());
+                    throw e;
+                }
+
                 checkState(lock.isHeldByCurrentThread());
                 // It connects to somewhere on the chain. Not necessarily the top of the best known chain.
                 params.checkDifficultyTransitions(storedPrev, block, blockStore);

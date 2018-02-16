@@ -63,7 +63,7 @@ public abstract class AbstractMonacoinNetParams extends NetworkParameters {
     protected final ReentrantLock lock = Threading.lock("blockchain");
 
     /** Keeps a map of block hashes to StoredBlocks. */
-    protected final BlockStore blockStore = null;
+    protected final BlockStore blockStore = null; //TODO Mona
 
     public AbstractMonacoinNetParams() {
         super();
