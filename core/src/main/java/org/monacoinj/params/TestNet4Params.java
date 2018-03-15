@@ -55,13 +55,14 @@ public class TestNet4Params extends AbstractMonacoinNetParams {
         p2shHeaderAlt = 117;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         dumpedPrivateKeyHeader = 239;
-        genesisBlock.setTime(1388479759L);
-        genesisBlock.setDifficultyTarget(0x1e0fffffL);
-        genesisBlock.setNonce(600389L);
+        genesisBlock.setTime(1488924140L);
+        genesisBlock.setDifficultyTarget(0x1e0ffff0L);
+        genesisBlock.setNonce(2122860L);
         spendableCoinbaseDepth = 100;
         subsidyDecreaseBlockCount = 1051200;
         String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("a0d810b45c92ac12e8c5b312a680caafba52216e5d9649b9dd86f7ad6550a43f"));
+
+        checkState(genesisHash.equals("a2b106ceba3be0c6d097b2a6a6aacf9d638ba8258ae478158f449c321061e0b2"));
         alertSigningKey = Utils.HEX.decode("04887665070e79d20f722857e58ec8f402733f710135521a0b63441419bf5665ba4623bed13fca0cb2338682ab2a54ad13ce07fbc81c3c2f0912a4eb8521dd3cfb");
 
         dnsSeeds = new String[] {
